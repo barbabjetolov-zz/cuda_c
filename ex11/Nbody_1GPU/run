@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+for d in 512 1024 2048 4096 8192 16384 32768 65536
+do
+	srun --gres=gpu ./bin/nbody -s $d -np -i 1000
+done 
