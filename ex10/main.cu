@@ -1,0 +1,346 @@
+/*************************************************************************************************
+ *
+ *        Computer Engineering Group, Heidelberg University - GPU Computing Exercise 09
+ *
+ *                           Group : TODO: TBD
+ *
+ *                            File : main.cpp
+ *
+ *                         Purpose : Stencil Code
+ *
+ *************************************************************************************************/
+
+#include <cmath>
+#include <stdio.h>
+#include <ctime>
+#include <iostream>
+#include <cstdlib>
+#include <chCommandLine.h>
+#include <chTimer.hpp>
+#include <cstdio>
+#include <iomanip>
+#include <cuda_runtime.h>
+
+const static int DEFAULT_NUM_ELEMENTS   = 1024;
+const static int DEFAULT_NUM_ITERATIONS =    5;
+const static int DEFAULT_BLOCK_DIM      =   32;
+
+//
+// Structures
+struct StencilArray_t {
+    float* array;
+    int    size; // size == width == height
+};
+
+//
+// Function Prototypes
+//
+void printHelp(char *);
+
+//
+// Stencil Code Kernel for the speed calculation
+//
+//extern void simpleStencil_Kernel_Wrapper(int gridSize, int blockSize, float* d_array, float* t_array, int size /* TODO Parameters */);
+//extern void optStencil_Kernel_Wrapper(int gridSize, int blockSize /* TODO Parameters */);
+
+//
+// Grid printing
+//
+void printgrid(float* grid, int size){
+  for(int i =0; i<size*size; i++){
+    if(i%size==0)
+      std::cout << std::endl;
+    std::cout << grid[i] << " ";
+  }
+  std::cout << std::endl;
+}
+
+__global__ void
+simpleStencil_Kernel(float *d, float* t, int size/* TODO Parameters */)
+{ 
+  int j = blockIdx.x * blockDim.x + threadIdx.x;
+  int i = blockIdx.y * blockDim.y + threadIdx.y;
+
+  int elementId = i*size + j;
+
+  if (i > 0 && j > 0 && i < size - 1 && j < size - 1){
+    t[elementId] = d[elementId] + 0.24 * (-4*d[elementId] + d[elementId + 1] + d[elementId - 1] + d[(i + 1)*size + j] + d[(i - 1)*size + j]);
+  if(t[elementId] > 127)
+      t[elementId] = 127;
+  
+
+  __syncthreads();
+
+  d[elementId] = t[elementId];
+  }
+
+}
+
+__global__ void
+optStencil_Kernel(float* d, float* t, int size, int bsz)
+{
+  int j = blockIdx.x * blockDim.x + threadIdx.x;
+  int i = blockIdx.y * blockDim.y + threadIdx.y;
+  int elementId = i*size + j;
+
+  int idx = threadIdx.x;
+  int idy = threadIdx.y;
+
+
+  __shared__ float d_sh[DEFAULT_BLOCK_DIM][DEFAULT_BLOCK_DIM];
+
+  d_sh[idx][idy] = d[elementId];
+
+	__syncthreads();
+
+  if (idx > 0 && idx < (DEFAULT_BLOCK_DIM - 1) && idy > 0 && idy < (DEFAULT_BLOCK_DIM - 1)){
+    t[elementId] = d_sh[idx][idy] + 0.24 * (-4*d_sh[idx][idy] + 
+                                     d_sh[idx + 1][idy] +
+                                     d_sh[idx - 1][idy] + 
+                                     d_sh[idx][idy + 1] + 
+                                     d_sh[idx][idy - 1]);
+
+  }
+  else if (i>0 && i<(size-1) && j>0 && j<(size-1)){
+    t[elementId] = d[elementId] + 0.24 * (-4*d[elementId] + d[elementId+1] + d[elementId-1] + d[elementId-size] + d[elementId+size]);
+  }
+
+  __syncthreads();
+
+  if (i>0 && i<(size-1) && j>0 && j<(size-1)){
+  d[elementId] = t[elementId];
+  }
+
+
+}
+//
+// Main
+//
+int
+main(int argc, char * argv[])
+{
+    bool showHelp = chCommandLineGetBool("h", argc, argv);
+    if (!showHelp) {
+        showHelp = chCommandLineGetBool("help", argc, argv);
+    }
+
+    if (showHelp) {
+        printHelp(argv[0]);
+        exit(0);
+    }
+
+    std::cout << "***" << std::endl
+              << "*** Starting ..." << std::endl
+              << "***" << std::endl;
+
+    ChTimer memCpyH2DTimer, memCpyD2HTimer;
+    ChTimer kernelTimer;
+
+    //
+    // Allocate Memory
+    //
+    int numElements = 0;
+    chCommandLineGet<int>(&numElements, "s", argc, argv);
+    chCommandLineGet<int>(&numElements, "size", argc, argv);
+    numElements = numElements != 0 ? numElements : DEFAULT_NUM_ELEMENTS;
+
+    //
+    // Host Memory
+    //
+    bool pinnedMemory = chCommandLineGetBool("p", argc, argv);
+    if (!pinnedMemory) {
+        pinnedMemory = chCommandLineGetBool("pinned-memory",argc,argv);
+    }
+
+	// use opt kernel?
+	bool useOpt = chCommandLineGetBool("opt", argc, argv);
+
+    StencilArray_t h_array;
+    h_array.size = numElements;
+    if (!pinnedMemory) {
+        // Pageable
+        h_array.array = static_cast<float*>
+                (malloc(static_cast<size_t>
+                (h_array.size * h_array.size * sizeof(*(h_array.array)))));
+    } else {
+        // Pinned<F4>
+        cudaMallocHost(&(h_array.array), 
+                static_cast<size_t>
+                (h_array.size * h_array.size * sizeof(*(h_array.array))));
+    }
+
+    // Init Particles
+//  srand(static_cast<unsigned>(time(0)));
+    srand(0); // Always the same random numbers
+    for (int i = 0; i < h_array.size * h_array.size; i++) {
+        h_array.array[i] = 0;
+        if(i <= 3*h_array.size/4 && i >= h_array.size/4)
+           h_array.array[i] = 127;
+
+        // TODO: Initialize the array
+    }
+
+   // printgrid(h_array.array, h_array.size);
+
+    // Device Memory
+    StencilArray_t d_array, t_array;
+    d_array.size = t_array.size = h_array.size;
+    cudaMalloc(&(d_array.array), 
+            static_cast<size_t>(d_array.size * d_array.size * sizeof(*d_array.array)));
+    cudaMalloc(&(t_array.array), 
+            static_cast<size_t>(t_array.size * t_array.size * sizeof(*t_array.array)));
+
+    if (h_array.array == NULL || d_array.array == NULL) {
+        std::cout << "\033[31m***" << std::endl
+                  << "*** Error - Memory allocation failed" << std::endl
+                  << "***\033[0m" << std::endl;
+
+        exit(-1);
+    }
+
+    //
+    // Copy Data to the Device
+    //
+    memCpyH2DTimer.start();
+
+    cudaMemcpy(d_array.array, h_array.array, 
+            static_cast<size_t>(d_array.size * d_array.size * sizeof(*d_array.array)), 
+            cudaMemcpyHostToDevice);
+
+    memCpyH2DTimer.stop();
+
+    cudaMemcpy(t_array.array, d_array.array, 
+            static_cast<size_t>(d_array.size * d_array.size * sizeof(*d_array.array)), 
+            cudaMemcpyDeviceToDevice);
+
+    //
+    // Get Kernel Launch Parameters
+    //
+    int blockSize = 0,
+        gridSize = 0,
+        numIterations = 0;
+
+    // Number of Iterations 
+    chCommandLineGet<int>(&numIterations,"i", argc, argv);
+    chCommandLineGet<int>(&numIterations,"num-iterations", argc, argv);
+    numIterations = numIterations != 0 ? numIterations : DEFAULT_NUM_ITERATIONS;
+
+    // Block Dimension / Threads per Block
+    chCommandLineGet<int>(&blockSize,"t", argc, argv);
+    chCommandLineGet<int>(&blockSize,"threads-per-block", argc, argv);
+    blockSize = blockSize != 0 ? blockSize : DEFAULT_BLOCK_DIM;
+
+    if (blockSize > 1024) {
+        std::cout << "\033[31m***" << std::endl
+                  << "*** Error - The number of threads per block is too big" << std::endl
+                  << "***\033[0m" << std::endl;
+
+        exit(-1);
+    }
+
+    gridSize = ceil(static_cast<float>(d_array.size) / static_cast<float>(blockSize));
+
+    dim3 grid_dim = dim3(gridSize, gridSize, 1);
+    dim3 block_dim = dim3(blockSize, blockSize, 1);
+
+    std::cout << "***" << std::endl;
+    std::cout << "*** Grid: " << gridSize << std::endl;
+    std::cout << "*** Block: " << blockSize << std::endl;
+    std::cout << "***" << std::endl;
+
+    kernelTimer.start();
+
+    //int sh_Size = blockSize * blockSize * sizeof(float);
+	
+    for (int i = 0; i < numIterations; i ++) {
+		if (!useOpt)
+			//simpleStencil_Kernel_Wrapper(gridSize, blockSize, d_array.array, t_array.array, d_array.size /* TODO Parameters */);
+      simpleStencil_Kernel<<<grid_dim, block_dim>>>(d_array.array, t_array.array, d_array.size /* TODO Parameters */);
+		else
+			optStencil_Kernel<<<grid_dim, block_dim>>>(d_array.array, t_array.array, d_array.size, blockSize/* TODO Parameters */);
+    }
+
+    // Synchronize
+    cudaDeviceSynchronize();
+
+    // Check for Errors
+    cudaError_t cudaError = cudaGetLastError();
+    if ( cudaError != cudaSuccess ) {
+        std::cout << "\033[31m***" << std::endl
+                  << "***ERROR*** " << cudaError << " - " << cudaGetErrorString(cudaError)
+                  << std::endl
+                  << "***\033[0m" << std::endl;
+
+        return -1;
+    }
+
+    kernelTimer.stop();
+
+    //
+    // Copy Back Data
+    //
+    memCpyD2HTimer.start();
+
+    cudaMemcpy(h_array.array, d_array.array, 
+            static_cast<size_t>(h_array.size * h_array.size * sizeof(*(h_array.array))), 
+            cudaMemcpyDeviceToHost);
+
+    memCpyD2HTimer.stop();
+
+    //printgrid(h_array.array, h_array.size);
+
+    // Free Memory
+    if (!pinnedMemory) {
+        free(h_array.array);
+    } else {
+        cudaFreeHost(h_array.array);
+    }
+
+    cudaFree(d_array.array);
+    cudaFree(t_array.array);
+
+    // Print Meassurement Results
+    std::cout << "***" << std::endl
+              << "*** Results:" << std::endl
+              << "*** You made it. The GPU ran without an error!" << std::endl << std::endl
+              << "***    Size: " << numElements << std::endl
+              << "***    Time to Copy to Device: " << 1e3 * memCpyH2DTimer.getTime()
+                << " ms" << std::endl
+              << "***    Copy Bandwidth: " 
+                << 1e-9 * memCpyH2DTimer.getBandwidth(numElements * sizeof(*h_array.array))
+                << " GB/s" << std::endl
+              << "***    Time to Copy from Device: " << 1e3 * memCpyD2HTimer.getTime()
+                << " ms" << std::endl
+              << "***    Copy Bandwidth: " 
+                << 1e-9 * memCpyD2HTimer.getBandwidth(numElements * sizeof(*h_array.array))
+                << " GB/s" << std::endl
+              << "***    Time for Stencil Computation: " << 1e3 * kernelTimer.getTime()
+                << " ms" << std::endl
+              << "***" << std::endl;
+
+    return 0;
+}
+
+void
+printHelp(char * argv)
+{
+    std::cout << "Help:" << std::endl
+              << "  Usage: " << std::endl
+              << "  " << argv << " [-p] [-s <num-elements>] [-t <threads_per_block>]"
+                  << std::endl
+              << "" << std::endl
+              << "  -p|--pinned-memory" << std::endl
+              << "    Use pinned Memory instead of pageable memory" << std::endl
+              << "" << std::endl
+              << "  -s <width-and-height>|--size <width-and-height>" << std::endl
+              << "    THe width and the height of the array" << std::endl
+              << "" << std::endl
+              << "  -t <threads_per_block>|--threads-per-block <threads_per_block>" 
+                  << std::endl
+              << "    The number of threads per block" << std::endl
+              << "" << std::endl
+              << "  --opt" 
+                  << std::endl
+              << "    Use the optimized Kernel" << std::endl
+              << "" << std::endl;
+}
