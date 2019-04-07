@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+for i in 320 3200 32000 64000 128000 
+do
+	srun --gres=gpu ./bin/nbody -s $i -np -i 100
+done 
+
+srun --gres=gpu ./bin/nbody -s 256000 -np -i 10

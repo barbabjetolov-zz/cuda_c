@@ -1,0 +1,194 @@
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 3
+*** Block: 128
+***
+***
+*** Printing Element 0 in iteration 99
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <-0.144693747|-0.00493129157|-0.121878877> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Results:
+***    Num Elements: 320
+***    Time to Copy to Device: 0.042674 ms
+***    Copy Bandwidth: 0.119979379 GB/s
+***    Time to Copy from Device: 0.025492 ms
+***    Copy Bandwidth: 0.200847325 GB/s
+***    Time for n-Body Computation: 22.763386 ms
+***
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 25
+*** Block: 128
+***
+***
+*** Printing Element 0 in iteration 99
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <-0.800436318|0.115987733|-0.676438987> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Results:
+***    Num Elements: 3200
+***    Time to Copy to Device: 0.078364 ms
+***    Copy Bandwidth: 0.653361237 GB/s
+***    Time to Copy from Device: 0.048331 ms
+***    Copy Bandwidth: 1.05936149 GB/s
+***    Time for n-Body Computation: 196.812032 ms
+***
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 250
+*** Block: 128
+***
+***
+*** Printing Element 0 in iteration 99
+***
+*** Position: < 18.0425587| 8.46936321| 16.8166313> [m]
+*** velocity: <-6.78318214| 1.10624146|-5.93236876> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Results:
+***    Num Elements: 32000
+***    Time to Copy to Device: 0.402294 ms
+***    Copy Bandwidth: 1.27270106 GB/s
+***    Time to Copy from Device: 0.331683 ms
+***    Copy Bandwidth: 1.54364257 GB/s
+***    Time for n-Body Computation: 9792.68957 ms
+***
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 500
+*** Block: 128
+***
+***
+*** Printing Element 0 in iteration 99
+***
+*** Position: < 18.0421886| 8.46944332| 16.8163586> [m]
+*** velocity: <-14.0236969| 2.65052533|-11.2953558> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Results:
+***    Num Elements: 64000
+***    Time to Copy to Device: 0.798022 ms
+***    Copy Bandwidth: 1.28317264 GB/s
+***    Time to Copy from Device: 0.720287 ms
+***    Copy Bandwidth: 1.42165553 GB/s
+***    Time for n-Body Computation: 36642.9908 ms
+***
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 1000
+*** Block: 128
+***
+***
+*** Printing Element 0 in iteration 99
+***
+*** Position: < 18.0414371| 8.46961212| 16.8158035> [m]
+*** velocity: <-28.8654785| 5.98209858|-22.2610664> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Results:
+***    Num Elements: 128000
+***    Time to Copy to Device: 1.458663 ms
+***    Copy Bandwidth: 1.40402547 GB/s
+***    Time to Copy from Device: 1.217846 ms
+***    Copy Bandwidth: 1.68165762 GB/s
+***    Time for n-Body Computation: 136423.343 ms
+***
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 2000
+*** Block: 128
+***
+***
+*** Printing Element 0 in iteration 99
+***
+*** Position: < 18.0400143| 8.47009945| 16.8146629> [m]
+*** velocity: <-57.1524963| 15.6998768|-44.9079399> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Results:
+***    Num Elements: 256000
+***    Time to Copy to Device: 2.809139 ms
+***    Copy Bandwidth: 1.45809802 GB/s
+***    Time to Copy from Device: 1.760383 ms
+***    Copy Bandwidth: 2.32676639 GB/s
+***    Time for n-Body Computation: 538108.227 ms
+***
+***
+*** Starting ...
+***
+***
+*** Printing Element 0 in iteration 0
+***
+*** Position: < 18.0428944| 8.46930885| 16.8169289> [m]
+*** velocity: <          0|          0|          0> [m/s]
+*** Mass: 1.71463693e+13 kg
+***
+***
+*** Grid: 4000
+*** Block: 128
+***
